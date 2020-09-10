@@ -274,6 +274,10 @@ class Connection(object):
         """
         return self._conn.mars_enabled
 
+
+    def _create_socket_connection(self, address, timeout):
+        return socket.create_connection(address, timeout)
+
     def _connect(self, host, port, instance, timeout):
         login = self._login
 
@@ -286,7 +290,7 @@ class Connection(object):
                 instance,
                 timeout=timeout)
             logger.info('Opening socket to %s:%d', host, port)
-            sock = socket.create_connection((host, port), timeout)
+            sock = self._create_socket_connection((host, port), timeout)
         except Exception as e:
             raise LoginError("Cannot connect to server '{0}': {1}".format(host, e), e)
 
@@ -1150,6 +1154,7 @@ def connect(dsn=None, database=None, user=None, password=None, timeout=None,
             disable_connect_retry=False,
             pooling=False,
             use_sso=False,
+            connection_class=None,
             ):
     """
     Opens connection to the database
@@ -1318,7 +1323,7 @@ def connect(dsn=None, database=None, user=None, password=None, timeout=None,
         autocommit,
     )
 
-    conn = Connection()
+    conn = (connection_class or Connection)()
     conn._use_tz = use_tz
     conn._autocommit = autocommit
     conn._login = login
